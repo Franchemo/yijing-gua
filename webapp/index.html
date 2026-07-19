@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#f2e8d5">
+  <title>易卦 · 意识占</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:       #f2e8d5;
+      --bg2:      #e8d9bf;
+      --paper:    #faf6ee;
+      --brown:    #6b4c2a;
+      --brown-lt: #9b7a52;
+      --gold:     #c9882a;
+      --red:      #9c3a2a;
+      --ink:      #2d1f0f;
+      --ink-lt:   #6b5040;
+      --border:   #c4a87a;
+      --shadow:   rgba(80,50,20,0.12);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; background: var(--bg); font-family: 'Noto Serif SC', serif; color: var(--ink); overflow: hidden; }
+
+    /* ── Screens ── */
+    .screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; transition: opacity .5s, transform .5s; }
+    .screen.hidden { opacity: 0; pointer-events: none; transform: translateY(20px); }
+
+    /* ── Decorative border ── */
+    .frame { position: fixed; inset: 12px; border: 1.5px solid var(--border); pointer-events: none; z-index: 100; }
+    .frame::before, .frame::after { content: ''; position: absolute; width: 20px; height: 20px; border-color: var(--gold); border-style: solid; }
+    .frame::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+    .frame::after  { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+
+    /* ── Corner ornaments ── */
+    .corner { position: fixed; font-size: 18px; color: var(--gold); opacity: .7; z-index: 101; pointer-events: none; }
+    .corner.tl { top: 20px; left: 20px; }
+    .corner.tr { top: 20px; right: 20px; }
+    .corner.bl { bottom: 20px; left: 20px; }
+    .corner.br { bottom: 20px; right: 20px; }
+
+    /* ── Typography ── */
+    h1 { font-size: 38px; font-weight: 300; letter-spacing: .2em; color: var(--brown); line-height: 1.3; }
+    h2 { font-size: 22px; font-weight: 400; letter-spacing: .15em; color: var(--brown); }
+    .sub { font-size: 13px; letter-spacing: .1em; color: var(--ink-lt); line-height: 2; }
+    .dot-divider { letter-spacing: .3em; color: var(--gold); margin: 12px 0; font-size: 12px; }
+
+    /* ── Buttons ── */
+    .btn { display: inline-flex; align-items: center; justify-content: center; padding: 12px 36px; border: 1.5px solid var(--brown); background: transparent; color: var(--brown); font-family: 'Noto Serif SC', serif; font-size: 15px; letter-spacing: .2em; cursor: pointer; transition: all .3s; border-radius: 2px; min-width: 140px; }
+    .btn:hover, .btn:active { background: var(--brown); color: var(--paper); }
+    .btn.primary { background: var(--brown); color: var(--paper); }
+    .btn.primary:hover { background: var(--ink); border-color: var(--ink); }
+    .btn.sm { padding: 8px 20px; font-size: 13px; min-width: 80px; }
+    .btn-group { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 20px; }
+
+    /* ── Screen 1: Intro ── */
+    #s-intro { text-align: center; gap: 0; }
+    .title-main { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-bottom: 28px; }
+    .title-zh { font-size: 52px; font-weight: 300; letter-spacing: .35em; color: var(--brown); text-indent: .35em; }
+    .title-sub { font-size: 13px; letter-spacing: .4em; color: var(--brown-lt); text-indent: .4em; }
+    .hexagram-preview { font-size: 48px; color: var(--gold); line-height: 1; margin: 12px 0 20px; opacity: .8; }
+    .intro-desc { font-size: 13px; color: var(--ink-lt); letter-spacing: .08em; line-height: 2.2; max-width: 280px; text-align: center; }
+    .intro-note { font-size: 11px; color: var(--brown-lt); letter-spacing: .06em; margin-top: 16px; opacity: .8; }
+
+    /* ── Screen 2: Meditation ── */
+    #s-meditate { text-align: center; gap: 20px; }
+    .meditate-circle { width: 160px; height: 160px; border-radius: 50%; border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; position: relative; margin: 0 auto; }
+    .meditate-circle::before { content: ''; position: absolute; inset: 8px; border-radius: 50%; border: 1px dashed var(--gold); opacity: .6; animation: rotateSlow 20s linear infinite; }
+    .timer-num { font-size: 52px; font-weight: 300; color: var(--brown); letter-spacing: -.02em; }
+    .timer-label { font-size: 12px; letter-spacing: .2em; color: var(--brown-lt); }
+    .meditate-hint { font-size: 13px; color: var(--ink-lt); letter-spacing: .1em; line-height: 2; max-width: 260px; text-align: center; }
+    .phase-label { font-size: 11px; letter-spacing: .2em; color: var(--gold); min-height: 20px; }
+    @keyframes rotateSlow { to { transform: rotate(360deg); } }
+    @keyframes pulse { 0%,100% { transform: scale(1); opacity:.8; } 50% { transform: scale(1.05); opacity:1; } }
+    .meditate-circle { animation: pulse 4s ease-in-out infinite; }
+
+    /* ── Screen 3: Input ── */
+    #s-input { text-align: center; gap: 16px; }
+    .time-display { font-size: 12px; letter-spacing: .15em; color: var(--brown-lt); background: var(--bg2); padding: 6px 16px; border-radius: 20px; border: 1px solid var(--border); }
+    .char-input-wrap { position: relative; margin: 8px 0; }
+    .char-input { width: 100px; height: 100px; font-size: 54px; text-align: center; background: var(--paper); border: 1.5px solid var(--border); color: var(--ink); font-family: 'Noto Serif SC', serif; border-radius: 4px; outline: none; transition: border-color .3s; caret-color: var(--gold); }
+    .char-input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,136,42,.1); }
+    .stroke-row { display: flex; align-items: center; gap: 10px; justify-content: center; }
+    .stroke-label { font-size: 12px; color: var(--ink-lt); letter-spacing: .08em; }
+    .stroke-val { font-size: 20px; font-weight: 500; color: var(--brown); min-width: 32px; text-align: center; }
+    .stroke-adj { width: 32px; height: 32px; border: 1px solid var(--border); background: transparent; color: var(--brown); font-size: 18px; cursor: pointer; border-radius: 2px; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+    .stroke-adj:hover { background: var(--brown); color: var(--paper); }
+    .stroke-note { font-size: 11px; color: var(--brown-lt); letter-spacing: .05em; line-height: 1.8; max-width: 260px; }
+    .shichen-display { font-size: 13px; color: var(--ink-lt); letter-spacing: .1em; }
+    .shichen-name { font-size: 18px; color: var(--brown); font-weight: 500; }
+    .input-tip { font-size: 12px; color: var(--ink-lt); letter-spacing: .05em; }
+
+    /* ── Screen 4: Result ── */
+    #s-result { gap: 0; padding: 20px; justify-content: flex-start; padding-top: 36px; overflow-y: auto; }
+    .result-inner { width: 100%; max-width: 360px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; padding-bottom: 24px; }
+    .gua-card { background: var(--paper); border: 1.5px solid var(--border); border-radius: 4px; padding: 18px 20px; position: relative; overflow: hidden; }
+    .gua-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
+    .gua-card.zhigua::before { background: linear-gradient(90deg, transparent, var(--red), transparent); }
+    .card-tag { font-size: 10px; letter-spacing: .2em; color: var(--brown-lt); margin-bottom: 10px; }
+    .gua-main { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; }
+    .gua-symbol { font-size: 40px; line-height: 1; }
+    .gua-title-wrap { flex: 1; }
+    .gua-num { font-size: 11px; color: var(--brown-lt); letter-spacing: .1em; }
+    .gua-name { font-size: 24px; font-weight: 500; color: var(--brown); letter-spacing: .1em; }
+    .gua-theme { font-size: 12px; color: var(--ink-lt); letter-spacing: .05em; margin-top: 2px; line-height: 1.6; }
+    .gua-trigrams { font-size: 11px; color: var(--brown-lt); letter-spacing: .08em; }
+    .gua-body { font-size: 13px; color: var(--ink-lt); line-height: 2; letter-spacing: .05em; border-top: 1px solid var(--bg2); padding-top: 12px; }
+    .yao-box { background: var(--bg); border: 1px solid var(--border); border-radius: 3px; padding: 10px 14px; }
+    .yao-title { font-size: 11px; color: var(--gold); letter-spacing: .15em; margin-bottom: 6px; }
+    .yao-text { font-size: 12px; color: var(--ink-lt); line-height: 1.9; letter-spacing: .05em; }
+    .result-note { font-size: 11px; color: var(--brown-lt); text-align: center; letter-spacing: .08em; line-height: 2; padding: 0 8px; }
+    .gua-lines { display: flex; flex-direction: column; gap: 3px; align-items: center; }
+    .yao-line { display: flex; gap: 4px; align-items: center; }
+    .yao-seg { width: 22px; height: 5px; border-radius: 2px; background: var(--brown); }
+    .yao-seg.broken { width: 9px; }
+    .yao-line.changing .yao-seg { background: var(--red); }
+
+    /* ── Dividers & misc ── */
+    .section-title { font-size: 11px; letter-spacing: .25em; color: var(--brown-lt); text-align: center; margin: 4px 0; }
+    .thin-line { height: 1px; background: var(--border); opacity: .4; margin: 4px 0; }
+    .notice-box { background: rgba(201,136,42,.06); border: 1px solid rgba(201,136,42,.3); border-radius: 4px; padding: 10px 14px; }
+    .notice-text { font-size: 11px; color: var(--ink-lt); line-height: 2; letter-spacing: .05em; }
+
+    /* ── Scrollbar ── */
+    #s-result::-webkit-scrollbar { width: 4px; }
+    #s-result::-webkit-scrollbar-track { background: transparent; }
+    #s-result::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<!-- Decorative frame -->
+<div class="frame"></div>
+<div class="corner tl">☰</div>
+<div class="corner tr">☷</div>
+<div class="corner bl">☵</div>
+<div class="corner br">☲</div>
+
+<!-- ══ Screen 1: Intro ══ -->
+<div class="screen" id="s-intro">
+  <div class="title-main">
+    <div class="title-zh">易卦</div>
+    <div class="title-sub">意 识 占</div>
+  </div>
+  <div class="hexagram-preview" id="intro-hex">䷀</div>
+  <div class="intro-desc">
+    静心凝神，<br>让一个汉字在心中浮现，<br>与天地运行的规律相通，<br>照见此刻的处境。
+  </div>
+  <div class="dot-divider">· · ·</div>
+  <button class="btn primary" onclick="startMeditate()">开始卜卦</button>
+  <div class="intro-note">方法源自《易经白话讲座》· 王笑讯</div>
+</div>
+
+<!-- ══ Screen 2: Meditation ══ -->
+<div class="screen hidden" id="s-meditate">
+  <div class="phase-label" id="phase-label">放 松 心 情</div>
+  <div class="meditate-circle">
+    <div>
+      <div class="timer-num" id="timer-num">30</div>
+      <div class="timer-label">秒</div>
+    </div>
+  </div>
+  <div class="meditate-hint" id="meditate-hint">
+    请放松，轻闭双眼<br>在心中默想您想问的事情<br>诚心祈求，静待感应
+  </div>
+  <button class="btn sm" onclick="skipToInput()" style="margin-top:8px">跳过</button>
+</div>
+
+<!-- ══ Screen 3: Input ══ -->
+<div class="screen hidden" id="s-input">
+  <h2 style="margin-bottom:4px">心中浮现的字</h2>
+  <div class="sub">闭目片刻后，输入脑海中浮现的汉字</div>
+
+  <div class="char-input-wrap">
+    <input class="char-input" id="char-input" type="text" maxlength="1"
+      placeholder="字" inputmode="text" autocomplete="off"
+      oninput="onCharInput(this.value)">
+  </div>
+
+  <div class="stroke-row">
+    <button class="stroke-adj" onclick="adjustStrokes(-1)">−</button>
+    <div>
+      <div class="stroke-label">康熙笔画</div>
+      <div class="stroke-val" id="stroke-val">—</div>
+    </div>
+    <button class="stroke-adj" onclick="adjustStrokes(1)">＋</button>
+  </div>
+
+  <div class="stroke-note notice-box">
+    <div class="notice-text">
+      笔画须按康熙字典计算：<br>
+      扌→手(4) &nbsp;|&nbsp; 艹→艸(6) &nbsp;|&nbsp; 辶→走(7)<br>
+      如自动识别有误，请手动调整
+    </div>
+  </div>
+
+  <div style="text-align:center">
+    <div class="sub">当前时辰</div>
+    <div class="shichen-name" id="shichen-name">—</div>
+    <div class="shichen-display" id="shichen-display">—</div>
+  </div>
+
+  <button class="btn primary" id="calc-btn" onclick="calculate()" disabled>起 卦</button>
+</div>
+
+<!-- ══ Screen 4: Result ══ -->
+<div class="screen hidden" id="s-result">
+  <div class="result-inner" id="result-inner">
+    <!-- injected by JS -->
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+//  DATA
+// ══════════════════════════════════════════════
+
+// 先天八卦：乾1 兑2 离3 震4 巽5 坎6 艮7 坤8
+const TRIGRAMS = [
+  null,
+  { name:'乾', elem:'天', symbol:'☰', lines:[1,1,1] },
+  { name:'兑', elem:'泽', symbol:'☱', lines:[1,1,0] },
+  { name:'离', elem:'火', symbol:'☲', lines:[1,0,1] },
+  { name:'震', elem:'雷', symbol:'☳', lines:[0,0,1] },
+  { name:'巽', elem:'风', symbol:'☴', lines:[1,1,0] }, // wait, 巽 is 011 from bottom
+  { name:'坎', elem:'水', symbol:'☵', lines:[0,1,0] },
+  { name:'艮', elem:'山', symbol:'☶', lines:[1,0,0] },
+  { name:'坤', elem:'地', symbol:'☷', lines:[0,0,0] }
+];
+// Correct lines (bottom to top): 1=yang, 0=yin
+// 乾=111, 兑=011, 离=101, 震=100, 巽=011... wait let me redo
+// 乾☰: top=yang mid=yang bot=yang → [1,1,1] (bot,mid,top)
+// 兑☱: top=yin  mid=yang bot=yang → [1,1,0]
+// 离☲: top=yang mid=yin  bot=yang → [1,0,1]
+// 震☳: top=yin  mid=yin  bot=yang → [1,0,0]
+// 巽☴: top=yang mid=yang bot=yin  → [0,1,1]
+// 坎☵: top=yin  mid=yang bot=yin  → [0,1,0]
+// 艮☶: top=yang mid=yin  bot=yin  → [0,0,1]
+// 坤☷: top=yin  mid=yin  bot=yin  → [0,0,0]
+
+const TRIG = [
+  null,
+  { name:'乾', elem:'天', symbol:'☰', attr:'刚健', lines:[1,1,1] },
+  { name:'兑', elem:'泽', symbol:'☱', attr:'喜悦', lines:[1,1,0] },
+  { name:'离', elem:'火', symbol:'☲', attr:'光明', lines:[1,0,1] },
+  { name:'震', elem:'雷', symbol:'☳', attr:'变动', lines:[1,0,0] },
+  { name:'巽', elem:'风', symbol:'☴', attr:'顺从', lines:[0,1,1] },
+  { name:'坎', elem:'水', symbol:'☵', attr:'险难', lines:[0,1,0] },
+  { name:'艮', elem:'山', symbol:'☶', attr:'静止', lines:[0,0,1] },
+  { name:'坤', elem:'地', symbol:'☷', attr:'承载', lines:[0,0,0] }
+];
+
+// 64卦：以上卦(1-8)×下卦(1-8)为索引，值为卦序号(1-64)
+// 行=上卦 列=下卦，先天序：乾兑离震巽坎艮坤
+//       乾  兑  离  震  巽  坎  艮  坤
+const GUA_MATRIX = [
+  null,
+  [ null,  1, 10, 13, 25, 44,  6, 33, 12 ], // 上乾
+  [ null, 43, 58, 49, 17, 28, 47, 31, 45 ], // 上兑
+  [ null, 14, 38, 30, 21, 50, 64, 56, 35 ], // 上离
+  [ null, 34, 54, 55, 51, 32, 40, 62, 16 ], // 上震
+  [ null,  9, 61, 37, 42, 57, 59, 53, 20 ], // 上巽
+  [ null,  5, 60, 63,  3, 48, 29, 39,  7 ], // 上坎
+  [ null, 26, 41, 22, 27, 18,  4, 52, 15 ], // 上艮
+  [ null, 11, 19, 36, 24, 46,  8, 23,  2 ]  // 上坤
+];
+
+// Unicode 易经六十四卦符号：U+4DC0 起
+const GUA_UNICODE = ['䷀','䷁','䷂','䷃','䷄','䷅','䷆','䷇','䷈','䷉','䷊','䷋','䷌','䷍','䷎','䷏','䷐','䷑','䷒','䷓','䷔','䷕','䷖','䷗','䷘','䷙','䷚','䷛','䷜','䷝','䷞','䷟','䷠','䷡','䷢','䷣','䷤','䷥','䷦','䷧','䷨','䷩','䷪','䷫','䷬','䷭','䷮','䷯','䷰','䷱','䷲','䷳','䷴','䷵','䷶','䷷','䷸','䷹','䷺','䷻','䷼','䷽','䷾','䷿'];
+
+// 64卦数据：[上卦index, 下卦index, 名, 主题, 简读]
+const HEXAGRAMS = {
+  1:  [1,1,'乾','有志的人就是龙','天行健，君子以自强不息。此刻如潜龙在渊，志向高远，但时机尚未成熟。保持内在的刚健与理想，脚踏实地积累实力，属于你的时机终将到来。'],
+  2:  [8,8,'坤','上天给人的最好礼物','地势坤，君子以厚德载物。以柔顺承载一切，不强出头，不急于表现。此刻宜包容守静，在默默付出中积累深厚的福德，自然有所收获。'],
+  3:  [6,4,'屯','老天只呵护真实的东西','万物初生，艰难蹒跚。起步之时总是最辛苦，但唯有真实的努力才能得到天地的呵护。勿贸然行动，先扎稳根基，寻求可靠的支持与合作。'],
+  4:  [7,6,'蒙','经历两次叛逆才能真正成熟','蒙以养正，圣功也。此时如少年未开蒙，需要放下固执，虚心学习。不要一意孤行，跟随有经验的引导，在反复中逐渐走向真正的成熟。'],
+  5:  [6,1,'需','赢得信任就赢得赛局','需者，待也。时机未到，不可强求。此刻最重要的事是耐心等待，同时建立周围人对你的信任。信任一旦确立，局势将自然向你倾斜。'],
+  6:  [1,6,'讼','认命的人最好命','天水相违，争讼之象。强行争执只会两败俱伤。与其硬争，不如审视自身是否真的有理。有时放下争执、顺应大势，才是得到最好结果的方式。'],
+  7:  [8,6,'师','敌人能教我们的事比朋友更多','师出以律，否臧凶。纪律与组织是成功的基础。此刻的挑战和阻力，恰恰是最好的老师。正视困难，从对立面学习，方能领兵而胜。'],
+  8:  [6,8,'比','因为你是锦别人才来添花','比者，辅也，吉也。亲比与合作将带来好运。先充实自己，让自己成为值得依靠的那块"锦"，贵人与伙伴自然会来锦上添花。'],
+  9:  [5,1,'小畜','内心没发光之前社会都会显得黑暗','密云不雨，力量尚在积蓄。外部条件还未成熟，强行突破反而受阻。此刻向内用功，让自己的内在先发出光来，外在的突破才会水到渠成。'],
+  10: [1,2,'履','每个人内心里都有一只野兽','履虎尾而不咥，谦慎之故也。前路虽有危险，但只要态度谦逊得体、步步为营，便能安然通过。驾驭好内心的欲望，行事不逾矩，吉。'],
+  11: [8,1,'泰','向帝乙学习当机立断的智慧','小往大来，吉亨。天地交泰，万物通顺。此刻是难得的顺势时机，当机立断，积极作为，拨云见日之际已然来临。把握当下，大有可为。'],
+  12: [1,8,'否','失败经验是人生重要的资产','天地不交，万物不通。看似困顿闭塞，实则是积累经验、沉淀自我的契机。小人得势之时，君子守正待时，此刻的挫折将成为日后最宝贵的资产。'],
+  13: [1,3,'同人','找到志同道合的朋友一起成就志业','同人于野，亨。与志同道合的人携手，可以共越艰难险阻。此刻宜放宽视野，走出小圈子，寻找真正志向相同的同行者，共成有意义的事业。'],
+  14: [3,1,'大有','老天给丰收时同时也给了任务','大有，元亨。丰收与繁盛之象。此刻的富足是老天的恩赐，同时也附带了责任与使命。以感恩之心承担更大的担当，方能持续享有丰盛。'],
+  15: [8,7,'谦','真正的谦虚只有对神明才是真的','谦，亨，君子有终。真正的谦逊不是表面姿态，而是内心对更高力量的敬畏。放下骄傲，承认自己的局限，以谦卑之心行事，终将有好的结局。'],
+  16: [4,8,'豫','抱持自信与乐观是最有福报的人','豫，利建侯行师。自信与乐观本身就是一种能量，能感召他人与机会。此刻保持积极的精神，鼓舞身边的人，动静有序，善用当下的顺势之机。'],
+  17: [2,4,'随','向左转或向右转其实没有差别','随，元亨利贞，无咎。顺应当下的时势与环境，不执着于特定方向。真正的智慧是灵活应变，此刻跟随最自然的流动，反而能得到最好的结果。'],
+  18: [7,5,'蛊','习性是一切业力的根源','蛊，元亨，利涉大川。旧有的积弊与习性需要革新。这是一个需要破除惯性、勇于改变的时刻。直面内心深处的执著，从根本处着手，才能真正转化命运。'],
+  19: [8,2,'临','最好的领导是价值领导','临，元亨利贞。以真实的价值感化他人，而非依赖权威或压力。此刻以身作则，坦诚相待，让人们因认同你的核心价值而自愿追随。'],
+  20: [5,8,'观','站到比自己更高的位置来看事情','观，盥而不荐，有孚颙若。提升自己的视野与格局，才能看清全局。此刻不要陷入细节的纠缠，退后一步，从更高的位置来理解当前的处境与方向。'],
+  21: [3,4,'噬嗑','有能力改变自己才有能力改变他人','噬嗑，亨，利用狱。中间有障碍阻隔，需要果断去除。要先从改变自身的思维与行为开始，内在的转化会自然带动外在问题的化解。'],
+  22: [7,3,'贲','理想很丰满现实很骨感','贲，亨，小利有攸往。文饰之象，形式与内容须兼顾。理想美好，但现实需要一步步落实。不要只追求外表的光鲜，注重内在的修炼，表里兼修方得真美。'],
+  23: [7,8,'剥','我们人生最重要的东西是什么','剥，不利有攸往。剥落之时，留下最核心、最真实的部分。此刻不宜强行推进，而是反问自己：什么是真正不可失去的？守住本质，等待重生。'],
+  24: [8,4,'复','一个好的起点比什么都重要','复，亨。一阳来复，新的循环开始了。回到初心，重新审视最初的出发点。好的开始决定好的终点，此刻是重新设定方向、奠定根基的最好时机。'],
+  25: [1,4,'无妄','不是你做不好而是因为你想太多','无妄，元亨利贞。放下过多的盘算与执著，回归自然真实的状态。此刻的困难不在于能力不足，而在于妄想与焦虑太多。清空头脑，顺势而为，结果反而更好。'],
+  26: [7,1,'大畜','在人生十字路口蓄势待发','大畜，利贞，不家食，吉。正处于积累与蓄势的关键阶段。不急于出手，继续充实内在的能量与实力。时机成熟时，一出手便是厚积薄发，势不可挡。'],
+  27: [7,4,'颐','心中有灵龟行动则要像老虎','颐，贞吉，观颐，自求口实。滋养之道，在于节制欲望、明辨所求。心中须有定见如灵龟，行动时则要勇猛果断如老虎。思清楚再动，动则全力以赴。'],
+  28: [2,5,'大过','经历大破才能得到大立','大过，栋桡，利有攸往，亨。当前的压力与挑战已超过常规范围。这是一次大考验，也是大突破的前奏。承担住压力，破而后立，此番经历将让你脱胎换骨。'],
+  29: [6,6,'坎','在逆境中绝对不能犯的三个错误','坎，有孚维心，亨，行有尚。险难重重，但内心诚实坚定便能穿越。此刻切忌：一忌失去诚信，二忌轻举妄动，三忌失去耐心。守住内心，步步为营。'],
+  30: [3,3,'离','保持优势的秘诀是超乎常人的耐心','离，利贞，亨，畜牝牛，吉。光明持续发亮，需要附着于正确的事物。此刻的优势来自持续而耐心的发光，不要急于求成，以柔顺之心长久维持，自然光芒四射。'],
+  31: [2,7,'咸','人生若只如初见','咸，亨，利贞，取女，吉。感应之卦，真诚相遇、自然而然的吸引。保持初见时那份纯粹的感受，不刻意算计，以真实的心去感应对方，关系自然亨通和谐。'],
+  32: [4,5,'恒','不曾努力而一事无成是最羞耻的事','恒，亨，无咎，利贞，利有攸往。恒久之道在于始终如一地坚持。不论顺境逆境，保持稳定的节奏与方向。此刻最重要的是继续做该做的事，不要半途而废。'],
+  33: [1,7,'遯','如果逃不掉那就迎向前去','遯，亨，小利贞。知进退，善藏锋。此刻并非软弱，而是清醒地认识到时机未到，选择暂时退隐以保存实力。真正的勇敢有时是懂得适时而退，以待来日。'],
+  34: [4,1,'大壮','理不直气也壮','大壮，利贞。刚强有力，但须分辨是否真正站在理上。气势虽盛，若无正当之理支撑，终将受挫。此刻检视自己的立场是否正确，理直才能气壮，否则当收敛锋芒。'],
+  35: [3,8,'晋','旭日东升勇往直前','晋，康侯用锡马蕃庶，昼日三接。如旭日东升，光明渐进。此刻正处于上升的通道，积极表现，主动争取，得到认可与提拔的机会已经来临，大胆前行。'],
+  36: [8,3,'明夷','最大的困难让生命产生最大的蜕变','明夷，利艰贞。光明受阻，在黑暗中坚守内心的光。此刻外在环境艰难，但内在的智慧与良知不可熄灭。在最深的困难中，往往孕育着最大的蜕变与成长。'],
+  37: [5,3,'家人','所有初见都是再续前缘','家人，利女贞。家庭与关系中各守其位，各尽其责。此刻把关注点放回到最亲近的人与关系上，以身作则，真诚相处，所有美好的相遇都有其深刻的因缘。'],
+  38: [3,2,'睽','相处不容易但分手更难','睽，小事吉。对立与差异之中寻找共同点。与其强求统一，不如接受彼此的不同，在差异中找到可以并存的平衡。小事上灵活变通，大原则上保持一致。'],
+  39: [6,7,'蹇','一个跛足的人如何翻过一座山','蹇，利西南，不利东北，利见大人，贞吉。前路有阻，此刻不宜单打独斗。寻求贵人协助，选择阻力较小的方向前进，一步一步克服障碍，跛足者也能翻山。'],
+  40: [4,6,'解','越担心越有事放下担心反而没事','解，利西南，无所往，其来复吉。困难已经解除，或即将解除。此刻最重要的是放下忧虑，不要过度思虑。轻装前进，顺其自然，事情往往比你担心的要顺利得多。'],
+  41: [7,2,'损','损物质益精神','损，有孚，元吉，无咎，可贞，利有攸往。减少外在的消耗，回归内在的充盈。此刻减法比加法更有力量。舍去多余的执著与负担，精神与内在反而会更加丰盛。'],
+  42: [5,4,'益','资源越多越要收敛精神','益，利有攸往，利涉大川。当增益与资源来临时，更需要保持内心的收敛与专注。扩张中不忘守正，把到手的资源用在真正有意义的地方，方能持续增益。'],
+  43: [2,1,'夬','一只飞得太高的孤鸟','夬，扬于王庭，孚号，有厉，告自邑，不利即戎，利有攸往。果断决断之时，但切忌过刚易折。孤高自傲终有危险，广而告之、团结众人，才能让决断真正落地生效。'],
+  44: [1,5,'姤','天上掉下来一个让人失望的礼物','姤，女壮，勿用取女。意外相遇，但须谨慎辨别。天赐之物不一定是礼物，有时反而是考验。保持清醒，不被表面的吸引力冲昏头脑，仔细辨别其真实意图与价值。'],
+  45: [2,8,'萃','让复杂的东西回归简单','萃，亨，王假有庙，利见大人，亨，利贞，用大牲吉，利有攸往。聚合与回归简单的时刻。此刻宜凝聚人心、整合资源，去掉复杂的枝节，回归最核心的目标与价值。'],
+  46: [8,5,'升','六十四卦里最好的一卦','升，元亨，用见大人，勿恤，南征吉。稳步上升，如树木扎根向上生长。此刻时机极佳，努力将得到回报。踏实积累，循序渐进，不必担忧，方向正确，前途光明。'],
+  47: [2,6,'困','六十四卦里最坏的一卦','困，亨，贞，大人吉，无咎，有言不信。困境之中，外在说什么都没人信，唯有坚守内心的诚实与正直。此刻沉住气，不轻易表白，以实际行动证明自己，等待困局自解。'],
+  48: [6,5,'井','接通我们内心里的灵泉','井，改邑不改井，无丧无得，往来井井。内在的灵泉是取之不竭的宝藏。此刻向内深挖，接通自己最真实的能量源泉。滋养好自己，才能滋养他人，这就是井卦的真义。'],
+  49: [2,3,'革','最好不要革命但也不要害怕革命','革，巳日乃孚，元亨利贞，悔亡。变革之时。旧有的模式已经走到尽头，改变是必要的。但革命须待时机成熟，不可操之过急。时机到来时，果断变革，勇于破旧立新。'],
+  50: [3,5,'鼎','煮一锅肉邀大家一起来吃','鼎，元吉，亨。承载使命，成就众人。如鼎器承载珍贵之物，此刻你有能力聚合资源，为众人提供滋养。以宽广的胸怀成就他人，自己的事业与价值也将因此提升。'],
+  51: [4,4,'震','一切力量都来自于定','震，亨，震来虩虩，笑言哑哑，震惊百里，不丧匕鬯。在震动与变故中保持内心的稳定，这是最大的力量。外在风浪越大，内心越需要定。定而后能虑，虑而后能得。'],
+  52: [7,7,'艮','修行的起点是自己给自己制定规则','艮其背，不获其身，行其庭，不见其人，无咎。适时停下来，是一种智慧。此刻宜止则止，为自己划定清晰的边界与规则。停止多余的行动，在静止中回归自我。'],
+  53: [5,7,'渐','把一件困难的事分割成十件简单的事','渐，女归，吉，利贞。循序渐进，如鸿雁一步一步迁徙，从不急躁冒进。此刻把大目标分解成小步骤，一步一个脚印，看似缓慢，实则最为稳健而有效。'],
+  54: [4,2,'归妹','一种想颠覆原有秩序的渴望','归妹，征凶，无攸利。内心有颠覆现状的冲动，但此刻须谨慎。打乱既有秩序可能带来不利的后果。明辨本末，守住正道，在合适的框架内寻求改变，而非贸然颠覆。'],
+  55: [4,3,'丰','如何度过人生的午后时光','丰，亨，王假之，勿忧，宜日中。丰盛巅峰之刻，正如日中天。享受这份充实与丰盛，同时知道盛极必衰，趁丰盛时布施善缘，积累未来的资粮，方能延续繁荣。'],
+  56: [3,7,'旅','当你找不到目标时那就去旅行','旅，小亨，旅贞吉。身处异乡或人生过渡期，漂泊而无所依。此刻保持谦逊谨慎，不要与人争执，随遇而安，在旅途中敞开心扉，往往会遇到意外的启示与指引。'],
+  57: [5,5,'巽','宁作凤尾不为鸡头','巽，小亨，利有攸往，利见大人。以柔顺之道渗透影响，如风入缝隙，无孔不入。不必强出头，以谦逊低调的姿态，持续而温和地施加影响，以柔克刚，成效深远。'],
+  58: [2,2,'兑','所有的失败都是不善沟通造成的','兑，亨，利贞。喜悦与沟通之道。真诚的表达和愉快的互动是此刻的关键。打开心扉，善于倾听，用温和而真实的方式与人交流，很多误会与困境都会迎刃而解。'],
+  59: [5,6,'涣','故乡再见我要搬去另一个地方','涣，亨，王假有庙，利涉大川，利贞。打破隔阂，化解凝固的局面。此刻如同将固化的冰块重新融化，让能量流动起来。勇于离开舒适圈，走向更广阔的天地，散而后聚。'],
+  60: [6,2,'节','如何在自我节制中感受安定与快乐','节，亨，苦节不可贞。适度的节制带来安定，但过度苦节则适得其反。此刻找到合理的边界与节奏，在自律与享受之间取得平衡，内心的安定与快乐便由此而生。'],
+  61: [5,2,'中孚','最有安全感的人才能成就最高的修行','中孚，豚鱼吉，利涉大川，利贞。内心真实与诚信是一切的根基。当你内心真正安定、不再需要向外寻求认可时，你与他人、与天地的连结便会自然通透，修行由此升华。'],
+  62: [4,7,'小过','犯错是为了让自己变得更好','小过，亨，利贞，可小事，不可大事，飞鸟遗之音，不宜上，宜下，大吉。此刻宜小步前进，不宜大动作。犯了小错不必自责，从中学习便是收获。谦逊低调，反而更能顺利前行。'],
+  63: [6,3,'既济','当一切都完美了我们只好走向失败','既济，亨，小利贞，初吉终乱。事情看似圆满完成，但正是此刻最需要警惕。盛极而衰是天道，居安思危，不要沉溺于成功，继续保持精进，才能将圆满维持得更久。'],
+  64: [3,6,'未济','最好的东西都会留一个未尽之意','未济，亨，小狐汔济，濡其尾，无攸利。事情尚未完成，仍在过渡之中。不要急于求成，保持谨慎，走好每一步。未完成之中蕴含着新的可能，这本身就是充满希望的状态。']
+};
+
+// 爻辞（每卦6爻，简版）
+const YAO_CI = {
+  1: ['初九：潜龙勿用。志向虽大，时机未到，暂且蛰伏。','九二：见龙在田，利见大人。才华初现，可寻贵人相助。','九三：君子终日乾乾，夕惕若厉，无咎。勤勉不懈，戒慎恐惧。','九四：或跃在渊，无咎。进退之间，审时度势。','九五：飞龙在天，利见大人。正处巅峰，大展身手。','上九：亢龙有悔。过于亢进，须知物极必反。'],
+  2: ['初六：履霜，坚冰至。细微处见端倪，防微杜渐。','六二：直、方、大，不习，无不利。以真实正直立身，自然通顺。','六三：含章可贞，或从王事，无成有终。韬光养晦，终有所成。','六四：括囊，无咎无誉。守口如瓶，明哲保身。','六五：黄裳，元吉。以中道行事，大吉。','上六：龙战于野，其血玄黄。过度扩张，两败俱伤。'],
+  3: ['初九：磐桓，利居贞，利建侯。起步维艰，稳扎稳打。','六二：屯如邅如，乘马班如，求婚媾，女子贞不字，十年乃字。等待真正的时机与缘分。','六三：即鹿无虞，惟入于林中，君子几，不如舍，往吝。不要盲目追逐，懂得放手。','六四：乘马班如，求婚媾，往吉，无不利。主动寻求合作，前景良好。','九五：屯其膏，小贞吉，大贞凶。守住核心资源，小事可为大事需谨慎。','上六：乘马班如，泣血涟如。固执到底只会伤心，适时放手。'],
+  // ... 其余卦爻辞简化处理
+};
+
+// 常见字康熙笔画数（收录约600字）
+const STROKES = {"一":1,"乙":1,"二":2,"十":2,"丁":2,"厂":2,"七":2,"卜":2,"人":2,"入":2,"八":2,"九":2,"几":2,"儿":2,"了":2,"力":2,"乃":2,"又":2,"三":3,"于":3,"干":3,"亏":3,"工":3,"土":3,"士":3,"才":3,"下":3,"大":3,"丈":3,"与":3,"万":3,"上":3,"小":3,"口":3,"山":3,"巾":3,"千":3,"乞":3,"川":3,"亿":3,"个":3,"勺":3,"久":3,"凡":3,"及":3,"夕":3,"丸":3,"么":3,"广":3,"亡":3,"门":3,"己":3,"已":3,"子":3,"卫":3,"也":3,"女":3,"飞":3,"刃":3,"习":3,"叉":3,"马":3,"乡":3,"四":4,"丰":4,"王":4,"无":4,"云":4,"专":4,"丑":4,"互":4,"切":4,"瓦":4,"止":4,"少":4,"日":4,"中":4,"贝":4,"内":4,"水":4,"见":4,"手":4,"午":4,"牛":4,"毛":4,"气":4,"升":4,"长":4,"仁":4,"什":4,"片":4,"仆":4,"化":4,"仇":4,"币":4,"仍":4,"仅":4,"斤":4,"爪":4,"反":4,"介":4,"父":4,"从":4,"今":4,"凶":4,"分":4,"乏":4,"公":4,"仓":4,"月":4,"氏":4,"勿":4,"欠":4,"风":4,"丹":4,"匀":4,"乌":4,"凤":4,"六":4,"文":4,"方":4,"火":4,"为":4,"斗":4,"忆":4,"计":4,"订":4,"户":4,"认":4,"心":4,"尺":4,"引":4,"丑":4,"巴":4,"孔":4,"队":4,"办":4,"以":4,"允":4,"予":4,"劝":4,"双":4,"书":4,"幻":4,"五":5,"艺":5,"木":5,"支":5,"厅":5,"不":5,"太":5,"犬":5,"区":5,"历":5,"去":5,"甘":5,"世":5,"古":5,"节":5,"本":5,"术":5,"可":5,"丙":5,"左":5,"厉":5,"右":5,"石":5,"布":5,"龙":5,"平":5,"灭":5,"轧":5,"东":5,"卡":5,"北":5,"占":5,"业":5,"旧":5,"帅":5,"归":5,"且":5,"旦":5,"目":5,"叶":5,"甲":5,"申":5,"叮":5,"电":5,"号":5,"田":5,"由":5,"只":5,"叫":5,"另":5,"叹":5,"四":5,"生":5,"失":5,"乍":5,"禾":5,"丘":5,"付":5,"仗":5,"代":5,"仙":5,"们":5,"他":5,"仪":5,"白":5,"斥":5,"瓜":5,"乎":5,"用":5,"甩":5,"印":5,"乐":5,"句":5,"匆":5,"册":5,"犯":5,"外":5,"处":5,"冬":5,"鸟":5,"务":5,"包":5,"饥":5,"主":5,"市":5,"立":5,"闪":5,"兰":5,"半":5,"汁":5,"汇":5,"头":5,"汉":5,"宁":5,"穴":5,"它":5,"讨":5,"写":5,"让":5,"礼":5,"训":5,"议":5,"必":5,"讯":5,"记":5,"永":5,"司":5,"尼":5,"民":5,"出":5,"边":5,"发":5,"圣":5,"对":5,"台":5,"矛":5,"纠":5,"母":5,"幼":5,"丝":5,"六":6,"在":6,"有":6,"百":6,"动":6,"机":6,"多":6,"死":6,"成":6,"老":6,"回":6,"存":6,"地":6,"当":6,"网":6,"年":6,"先":6,"同":6,"吃":6,"合":6,"吗":6,"名":6,"后":6,"各":6,"吐":6,"向":6,"吹":6,"因":6,"吸":6,"吗":6,"因":6,"团":6,"在":6,"则":6,"刚":6,"创":6,"划":6,"列":6,"匈":6,"危":6,"旬":6,"旭":6,"旨":6,"早":6,"吐":6,"吁":6,"曲":6,"肉":6,"年":6,"朱":6,"先":6,"丢":6,"乔":6,"伟":6,"传":6,"乒":6,"乓":6,"休":6,"伍":6,"伏":6,"优":6,"伐":6,"延":6,"件":6,"任":6,"仰":6,"份":6,"华":6,"仿":6,"伙":6,"伤":6,"价":6,"估":6,"伺":6,"似":6,"伪":6,"后":6,"行":6,"舟":6,"全":6,"会":6,"杀":6,"合":6,"兆":6,"企":6,"众":6,"爷":6,"伞":6,"创":6,"肌":6,"朵":6,"杂":6,"危":6,"旬":6,"负":6,"各":6,"名":6,"多":6,"争":6,"色":6,"壮":6,"冲":6,"妆":6,"冰":6,"庄":6,"庆":6,"刘":6,"齐":6,"交":6,"次":6,"产":6,"决":6,"充":6,"妄":6,"安":6,"讲":6,"军":6,"农":6,"讽":6,"设":6,"访":6,"寻":6,"那":6,"迅":6,"尽":6,"导":6,"异":6,"孙":6,"阵":6,"阳":6,"收":6,"阶":6,"防":6,"奸":6,"如":6,"妇":6,"好":6,"她":6,"妈":6,"戏":6,"羽":6,"观":6,"欢":6,"买":6,"红":6,"纤":6,"约":6,"纪":6,"驰":6,"七":7,"见":7,"我":7,"步":7,"体":7,"位":7,"低":7,"住":7,"你":7,"来":7,"何":7,"作":7,"伸":7,"但":7,"伯":7,"佛":7,"近":7,"彻":7,"役":7,"彼":7,"往":7,"征":7,"忍":7,"志":7,"忘":7,"忌":7,"快":7,"忧":7,"完":7,"空":7,"穷":7,"究":7,"社":7,"补":7,"初":7,"运":7,"还":7,"两":7,"声":7,"报":7,"里":7,"努":7,"却":7,"劳":7,"克":7,"助":7,"勇":7,"別":7,"判":7,"利":7,"删":7,"则":7,"刨":7,"函":7,"别":7,"吩":7,"吴":7,"吵":7,"吶":7,"呆":7,"告":7,"含":7,"吞":7,"呀":7,"吻":7,"吣":7,"员":7,"听":7,"吟":7,"吝":7,"吭":7,"吗":7,"否":7,"吧":7,"君":7,"吩":7,"呈":7,"旷":7,"吵":7,"时":7,"旱":7,"旳":7,"町":7,"男":7,"甸":7,"呐":7,"坐":7,"寿":7,"扶":7,"抑":7,"投":7,"折":7,"抓":7,"把":7,"拒":7,"找":7,"扳":7,"抄":7,"扯":7,"址":7,"坑":7,"块":7,"均":7,"坏":7,"坊":7,"城":7,"坐":7,"坝":7,"扰":7,"坎":7,"声":7,"沐":7,"沙":7,"没":7,"沈":7,"沉":7,"泛":7,"泥":7,"法":7,"泡":7,"注":7,"沫":7,"泻":7,"泳":7,"沽":7,"沿":7,"泽":7,"波":7,"泣":7,"泳":7,"沾":7,"沸":7,"汪":7,"沪":7,"沭":7,"汰":7,"汹":7,"沦":7,"浅":7,"孝":7,"床":7,"库":7,"应":7,"底":7,"庇":7,"庐":7,"序":7,"弄":7,"张":7,"状":7,"弃":7,"灶":7,"灿":7,"忙":7,"抚":7,"际":7,"陆":7,"阶":7,"陈":7,"附":7,"妒":7,"妙":7,"妥":7,"姐":7,"妹":7,"妨":7,"努":7,"孜":7,"孝":7,"局":7,"层":7,"改":7,"纳":7,"驱":7,"纯":7,"纷":7,"纱":7,"纸":7,"纹":7,"纲":7,"纵":7,"纺":7,"驯":7,"八":8,"学":8,"明":8,"其":8,"取":8,"直":8,"实":8,"金":8,"国":8,"画":8,"长":8,"青":8,"知":8,"事":8,"物":8,"所":8,"建":8,"拉":8,"抬":8,"抱":8,"担":8,"抵":8,"拦":8,"拨":8,"挂":8,"抢":8,"招":8,"披":8,"拖":8,"拔":8,"拣":8,"拥":8,"拢":8,"拘":8,"押":8,"拉":8,"侧":8,"使":8,"供":8,"例":8,"版":8,"侦":8,"依":8,"侠":8,"侣":8,"侯":8,"保":8,"促":8,"俄":8,"侮":8,"信":8,"修":8,"偶":8,"俩":8,"侵":8,"便":8,"俗":8,"俊":8,"俏":8,"府":8,"底":8,"庞":8,"店":8,"放":8,"刻":8,"刺":8,"刷":8,"固":8,"叫":8,"呼":8,"咬":8,"咳":8,"呻":8,"呵":8,"呢":8,"周":8,"味":8,"呱":8,"命":8,"和":8,"咎":8,"咐":8,"哎":8,"哈":8,"哭":8,"哦":8,"哩":8,"哪":8,"哗":8,"拐":8,"坦":8,"坡":8,"坤":8,"坩":8,"垃":8,"坊":8,"建":8,"弧":8,"弥":8,"忠":8,"性":8,"怪":8,"怖":8,"怡":8,"急":8,"怎":8,"念":8,"忽":8,"况":8,"怂":8,"法":8,"泼":8,"泰":8,"治":8,"况":8,"沿":8,"泄":8,"河":8,"油":8,"泊":8,"沼":8,"泻":8,"渡":8,"凭":8,"卓":8,"武":8,"若":8,"苦":8,"英":8,"幸":8,"范":8,"茅":8,"苗":8,"苑":8,"茂":8,"林":8,"枝":8,"枚":8,"枪":8,"板":8,"杰":8,"松":8,"杰":8,"析":8,"构":8,"来":8,"轮":8,"软":8,"鱼":8,"纬":8,"经":8,"终":8,"绍":8,"驻":8,"驾":8,"骄":8,"骆":8,"九":9,"种":9,"思":9,"界":9,"看":9,"很":9,"面":9,"独":9,"美":9,"指":9,"持":9,"政":9,"故":9,"贵":9,"界":9,"点":9,"轻":9,"前":9,"选":9,"城":9,"复":9,"幽":9,"怒":9,"恢":9,"按":9,"挺":9,"括":9,"挖":9,"拼":9,"挡":9,"挣":9,"挤":9,"捧":9,"持":9,"促":9,"侵":9,"俊":9,"保":9,"信":9,"修":9,"便":9,"俗":9,"客":9,"室":9,"宫":9,"宣":9,"宵":9,"家":9,"帝":9,"带":9,"弭":9,"赴":9,"总":9,"急":9,"恒":9,"恼":9,"悄":9,"怒":9,"怜":9,"悉":9,"恐":9,"恳":9,"恨":9,"恢":9,"恩":9,"恶":9,"恋":9,"恰":9,"恤":9,"惊":9,"段":9,"殃":9,"殇":9,"泉":9,"洪":9,"洒":9,"洋":9,"洞":9,"洲":9,"润":9,"浊":9,"派":9,"浓":9,"涌":9,"浪":9,"浮":9,"消":9,"海":9,"涨":9,"涉":9,"浇":9,"泼":9,"浩":9,"测":9,"津":9,"活":9,"洁":9,"济":9,"浅":9,"茶":9,"药":9,"荣":9,"荐":9,"草":9,"荒":9,"故":9,"胡":9,"胆":9,"胜":9,"脉":9,"背":9,"胸":9,"胃":9,"映":9,"春":9,"是":9,"昨":9,"显":9,"星":9,"哈":9,"响":9,"哲":9,"唠":9,"唤":9,"唐":9,"唱":9,"唯":9,"降":9,"限":9,"研":9,"砰":9,"砸":9,"契":9,"奏":9,"秋":9,"科":9,"秒":9,"查":9,"拱":9,"柔":9,"柳":9,"染":9,"柜":9,"标":9,"栏":9,"树":9,"栋":9,"剐":9,"毒":9,"架":9,"轴":9,"城":9,"基":9,"堂":9,"域":9,"塔":9,"堵":9,"陷":9,"险":9,"陪":9,"烈":9,"烧":9,"烦":9,"热":9,"爱":10,"能":10,"都":10,"高":10,"真":10,"致":10,"家":10,"容":10,"展":10,"课":10,"校":10,"案":10,"流":10,"浦":10,"悟":10,"悲":10,"悔":10,"情":10,"惜":10,"悼":10,"惭":10,"惧":10,"惟":10,"惦":10,"惩":10,"惊":10,"惰":10,"想":10,"感":10,"总":10,"慈":10,"悠":10,"悦":10,"通":10,"速":10,"造":10,"逃":10,"退":10,"适":10,"逆":10,"选":10,"运":10,"迷":10,"追":10,"逝":10,"逐":10,"逢":10,"透":10,"途":10,"宿":10,"密":10,"寂":10,"寄":10,"宽":10,"宾":10,"容":10,"宵":10,"害":10,"官":10,"宰":10,"宴":10,"展":10,"振":10,"捡":10,"捉":10,"捏":10,"效":10,"料":10,"旅":10,"旁":10,"时":10,"晒":10,"晓":10,"晕":10,"涛":10,"涡":10,"涯":10,"涵":10,"洗":10,"海":10,"浸":10,"涪":10,"宫":10,"恭":10,"莫":10,"荷":10,"莱":10,"莹":10,"莲":10,"获":10,"菊":10,"素":10,"桂":10,"桌":10,"框":10,"桥":10,"档":10,"格":10,"梗":10,"根":10,"株":10,"栽":10,"样":10,"核":10,"桃":10,"烤":10,"烧":10,"烦":10,"烟":10,"扇":10,"盐":10,"健":10,"停":10,"偶":10,"偷":10,"假":10,"偏":10,"做":11,"望":11,"理":11,"被":11,"深":11,"清":11,"竟":11,"情":11,"得":11,"常":11,"断":11,"混":11,"淡":11,"渡":11,"渗":11,"渣":11,"淘":11,"源":11,"淳":11,"渴":11,"淮":11,"添":11,"淙":11,"渺":11,"液":11,"淋":11,"淡":11,"液":11,"淫":11,"淀":11,"涸":11,"渊":11,"渐":11,"淹":11,"淫":11,"淑":11,"淡":11,"淖":11,"凑":11,"减":11,"淡":11,"淮":11,"梦":11,"船":11,"盘":11,"晨":11,"晴":11,"晶":11,"景":11,"望":11,"量":11,"啊":11,"啤":11,"唾":11,"喝":11,"喘":11,"喜":11,"喉":11,"喷":11,"喧":11,"常":11,"帽":11,"健":11,"偶":11,"假":11,"兜":11,"停":11,"偷":11,"倾":11,"做":11,"悬":11,"斜":11,"徒":11,"得":11,"御":11,"徘":11,"徙":11,"规":11,"视":11,"祸":11,"祭":11,"移":11,"透":11,"通":11,"逻":11,"逸":11,"逮":11,"造":11,"速":11,"掌":11,"掘":11,"掸":11,"揉":11,"控":11,"探":11,"捷":11,"接":11,"排":11,"掉":11,"掀":11,"描":11,"措":11,"推":11,"揣":11,"掺":11,"掣":11,"敏":11,"救":11,"教":11,"敢":11,"散":11,"数":11,"斋":11,"勒":11,"绵":11,"缘":11,"缘":11,"绿":11,"缀":11,"缓":11,"缄":11,"绳":11,"缓":11,"缅":11,"缘":11,"统":11,"编":11,"缚":11,"缝":11,"缠":11,"缥":11,"缦":11,"缤":11,"缭":11,"缮":11,"十":12,"博":12,"然":12,"喜":12,"湖":12,"渴":12,"满":12,"温":12,"溅":12,"湾":12,"滑":12,"涵":12,"温":12,"渡":12,"漫":12,"湿":12,"滋":12,"滞":12,"滔":12,"激":12,"澎":12,"瀑":12,"溪":12,"溢":12,"漂":12,"漠":12,"漩":12,"漫":12,"演":12,"漏":12,"漾":12,"滚":12,"滤":12,"涝":12,"测":12,"渴":12,"测":12,"焦":12,"煤":12,"煮":12,"焰":12,"煌":12,"煊":12,"煽":12,"然":12,"斯":12,"期":12,"欺":12,"款":12,"椎":12,"棒":12,"棋":12,"棕":12,"椰":12,"棍":12,"棚":12,"棺":12,"棱":12,"椭":12,"硬":12,"确":12,"碍":12,"础":12,"碑":12,"碘":12,"碗":12,"碌":12,"碎":12,"锅":12,"锋":12,"锐":12,"锑":12,"锒":12,"锡":12,"锤":12,"锦":12,"锯":12,"锹":12,"锻":12,"镁":12,"镇":12,"镜":12,"镣":12,"镶":12,"超":12,"越":12,"愤":12,"慌":12,"惶":12,"愧":12,"慷":12,"慕":12,"愁":12,"感":12,"慎":12,"慢":12,"慨":12,"懒":12,"懦":12,"懊":12,"懈":12,"懵":12,"懒":12,"意":13,"感":13,"勤":13,"爱":13,"想":13,"路":13,"跑":13,"跟":13,"跳":13,"蒙":13,"暗":13,"新":13,"准":13,"源":13,"滨":13,"溜":13,"溅":13,"溪":13,"蓄":13,"蒸":13,"置":13,"署":13,"福":13,"殿":13,"蜕":13,"蜀":13,"蜂":13,"蜈":13,"蜇":13,"蜒":13,"蜓":13,"蝶":13,"蝉":13,"蝙":13,"蟋":13,"蟀":13,"蟆":13,"蟠":13,"蟒":13,"蟹":13,"象":12,"观":13,"解":13,"豢":13,"貌":14,"疑":14,"算":14,"鼻":14,"需":14,"静":14,"境":14,"精":14,"德":15,"谢":17,"藏":17,"赢":17};
+
+// 十二时辰
+const SHICHEN = [
+  {name:'子',hours:[23,0],label:'23:00 – 01:00',num:1},
+  {name:'丑',hours:[1,2],label:'01:00 – 03:00',num:2},
+  {name:'寅',hours:[3,4],label:'03:00 – 05:00',num:3},
+  {name:'卯',hours:[5,6],label:'05:00 – 07:00',num:4},
+  {name:'辰',hours:[7,8],label:'07:00 – 09:00',num:5},
+  {name:'巳',hours:[9,10],label:'09:00 – 11:00',num:6},
+  {name:'午',hours:[11,12],label:'11:00 – 13:00',num:7},
+  {name:'未',hours:[13,14],label:'13:00 – 15:00',num:8},
+  {name:'申',hours:[15,16],label:'15:00 – 17:00',num:9},
+  {name:'酉',hours:[17,18],label:'17:00 – 19:00',num:10},
+  {name:'戌',hours:[19,20],label:'19:00 – 21:00',num:11},
+  {name:'亥',hours:[21,22],label:'21:00 – 23:00',num:12}
+];
+
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+let currentStrokes = 0;
+let timerInterval = null;
+let shichenNum = 1;
+
+// ══════════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════════
+function getShichen() {
+  const h = new Date().getHours();
+  if (h === 23) return SHICHEN[0];
+  for (const s of SHICHEN) {
+    const [a, b] = s.hours;
+    if (h === a || h === b) return s;
+  }
+  return SHICHEN[0];
+}
+
+function mod8(n) {
+  if (n === 0) return 8;
+  const r = n % 8;
+  return r === 0 ? 8 : r;
+}
+
+function getUpperGua(strokes) {
+  return mod8(strokes);
+}
+
+function getLowerGua(upperIdx, shichenN) {
+  // 从上卦往后数 shichenN 位（上卦不计）
+  // 先天序循环: 1→2→3→4→5→6→7→8→1→...
+  let idx = upperIdx;
+  for (let i = 0; i < shichenN; i++) {
+    idx = idx % 8 + 1;
+  }
+  return idx;
+}
+
+function getChangingYao(strokes, shichenN) {
+  const sum = strokes + shichenN;
+  const r = sum % 6;
+  return r === 0 ? 6 : r;
+}
+
+function buildLines(upperIdx, lowerIdx) {
+  // 返回6爻（从初爻到上爻），1=阳 0=阴
+  const u = TRIG[upperIdx].lines; // [bot,mid,top] of upper trigram
+  const l = TRIG[lowerIdx].lines; // [bot,mid,top] of lower trigram
+  // 六爻由下至上：l[0] l[1] l[2] u[0] u[1] u[2]
+  return [l[0], l[1], l[2], u[0], u[1], u[2]];
+}
+
+// ══════════════════════════════════════════════
+//  SCREENS
+// ══════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+}
+
+// Rotate intro hexagram
+const hexSeq = ['䷀','䷁','䷂','䷃','䷄','䷅','䷆','䷇','䷈','䷉','䷪','䷫','䷬','䷭','䷮','䷯','䷰','䷱','䷲','䷳','䷴','䷵','䷶','䷷','䷸','䷹','䷺','䷻','䷼','䷽','䷾','䷿'];
+let hexIdx = 0;
+setInterval(() => {
+  document.getElementById('intro-hex').textContent = hexSeq[hexIdx++ % hexSeq.length];
+}, 1800);
+
+// ══════════════════════════════════════════════
+//  SCREEN 1 → 2
+// ══════════════════════════════════════════════
+function startMeditate() {
+  showScreen('s-meditate');
+  let t = 30;
+  const numEl = document.getElementById('timer-num');
+  const hintEl = document.getElementById('meditate-hint');
+  const phaseEl = document.getElementById('phase-label');
+
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    t--;
+    numEl.textContent = t;
+    if (t === 20) {
+      phaseEl.textContent = '默 想 问 题';
+      hintEl.innerHTML = '在心中默想您想问的事情<br>或当下的困惑与迷茫<br>诚心祈求，静待感应';
+    }
+    if (t === 10) {
+      phaseEl.textContent = '静 待 浮 现';
+      hintEl.innerHTML = '轻闭双眼<br>让一个汉字<br>自然浮现在心中';
+    }
+    if (t <= 0) {
+      clearInterval(timerInterval);
+      goToInput();
+    }
+  }, 1000);
+}
+
+function skipToInput() {
+  clearInterval(timerInterval);
+  goToInput();
+}
+
+// ══════════════════════════════════════════════
+//  SCREEN 2 → 3
+// ══════════════════════════════════════════════
+function goToInput() {
+  showScreen('s-input');
+  const sc = getShichen();
+  shichenNum = sc.num;
+  document.getElementById('shichen-name').textContent = sc.name + '时';
+  document.getElementById('shichen-display').textContent = sc.label;
+  updateCalcBtn();
+}
+
+function onCharInput(val) {
+  if (!val) {
+    currentStrokes = 0;
+    document.getElementById('stroke-val').textContent = '—';
+    updateCalcBtn();
+    return;
+  }
+  const ch = val[0];
+  document.getElementById('char-input').value = ch;
+  if (STROKES[ch]) {
+    currentStrokes = STROKES[ch];
+    document.getElementById('stroke-val').textContent = currentStrokes;
+  } else {
+    currentStrokes = 1;
+    document.getElementById('stroke-val').textContent = '?  请手动调整';
+  }
+  updateCalcBtn();
+}
+
+function adjustStrokes(delta) {
+  if (!document.getElementById('char-input').value) return;
+  currentStrokes = Math.max(1, Math.min(36, currentStrokes + delta));
+  document.getElementById('stroke-val').textContent = currentStrokes;
+  updateCalcBtn();
+}
+
+function updateCalcBtn() {
+  const ch = document.getElementById('char-input').value;
+  document.getElementById('calc-btn').disabled = !(ch && currentStrokes > 0);
+}
+
+// ══════════════════════════════════════════════
+//  SCREEN 3 → 4: Calculate
+// ══════════════════════════════════════════════
+function calculate() {
+  const ch = document.getElementById('char-input').value;
+  const strokes = currentStrokes;
+  const sc = getShichen();
+  shichenNum = sc.num;
+
+  const upperIdx = getUpperGua(strokes);
+  const lowerIdx = getLowerGua(upperIdx, shichenNum);
+  const benguaNum = GUA_MATRIX[upperIdx][lowerIdx];
+  const changingYao = getChangingYao(strokes, shichenNum);
+
+  // Build 之卦 by flipping the changing yao
+  const lines = buildLines(upperIdx, lowerIdx);
+  const zhiLines = [...lines];
+  zhiLines[changingYao - 1] = 1 - zhiLines[changingYao - 1];
+
+  // Determine 之卦's upper/lower trigrams
+  const zhiLower = trigramFromLines(zhiLines.slice(0, 3));
+  const zhiUpper = trigramFromLines(zhiLines.slice(3, 6));
+  const zhiguaNum = GUA_MATRIX[zhiUpper][zhiLower];
+
+  renderResult(ch, strokes, sc, upperIdx, lowerIdx, benguaNum, changingYao, lines, zhiLines, zhiUpper, zhiLower, zhiguaNum);
+  showScreen('s-result');
+}
+
+function trigramFromLines(lines) {
+  // lines = [bot, mid, top]
+  for (let i = 1; i <= 8; i++) {
+    const t = TRIG[i].lines;
+    if (t[0] === lines[0] && t[1] === lines[1] && t[2] === lines[2]) return i;
+  }
+  return 1;
+}
+
+// ══════════════════════════════════════════════
+//  RENDER RESULT
+// ══════════════════════════════════════════════
+function renderResult(ch, strokes, sc, upperIdx, lowerIdx, benguaNum, changingYao, lines, zhiLines, zhiUpper, zhiLower, zhiguaNum) {
+  const bengua = HEXAGRAMS[benguaNum];
+  const zhigua = HEXAGRAMS[zhiguaNum];
+  const benSymbol = GUA_UNICODE[benguaNum - 1];
+  const zhiSymbol = GUA_UNICODE[zhiguaNum - 1];
+
+  const yaoNames = ['初','二','三','四','五','上'];
+  const yaoYinYang = (line) => line === 1 ? '九' : '六';
+  const changingYaoName = `${yaoNames[changingYao-1]}${yaoYinYang(lines[changingYao-1])}`;
+
+  // Get yao text
+  let yaoText = '';
+  if (YAO_CI[benguaNum] && YAO_CI[benguaNum][changingYao-1]) {
+    yaoText = YAO_CI[benguaNum][changingYao-1];
+  }
+
+  function linesHtml(ls, changingIdx) {
+    return ls.slice().reverse().map((l, i) => {
+      const realIdx = 5 - i; // 从上往下画，对应爻位
+      const isChanging = (realIdx === changingIdx - 1);
+      if (l === 1) {
+        return `<div class="yao-line${isChanging?' changing':''}">
+          <div class="yao-seg"></div><div class="yao-seg"></div><div class="yao-seg"></div>
+        </div>`;
+      } else {
+        return `<div class="yao-line${isChanging?' changing':''}">
+          <div class="yao-seg broken"></div><div style="width:6px"></div><div class="yao-seg broken"></div>
+        </div>`;
+      }
+    }).join('');
+  }
+
+  const html = `
+    <!-- 卜卦记录 -->
+    <div style="text-align:center; margin-bottom:4px">
+      <div class="section-title">· ${new Date().toLocaleTimeString('zh',{hour:'2-digit',minute:'2-digit'})} · ${sc.name}时 · 字「${ch}」· ${strokes}画 ·</div>
+    </div>
+
+    <!-- 本卦 -->
+    <div class="gua-card">
+      <div class="card-tag">本 卦 · 当下处境</div>
+      <div class="gua-main">
+        <div>
+          <div class="gua-lines">${linesHtml(lines, changingYao)}</div>
+        </div>
+        <div style="font-size:44px;color:var(--gold);opacity:.8">${benSymbol}</div>
+        <div class="gua-title-wrap">
+          <div class="gua-num">第 ${benguaNum} 卦</div>
+          <div class="gua-name">${bengua[2]}卦</div>
+          <div class="gua-trigrams">${TRIG[upperIdx].name}${TRIG[upperIdx].elem}上 · ${TRIG[lowerIdx].name}${TRIG[lowerIdx].elem}下</div>
+        </div>
+      </div>
+      <div class="gua-theme" style="margin-bottom:12px;font-style:italic;color:var(--brown-lt)">「${bengua[3]}」</div>
+      <div class="gua-body">${bengua[4]}</div>
+    </div>
+
+    <!-- 变爻 -->
+    <div class="yao-box">
+      <div class="yao-title">▸ 变爻 · 第 ${changingYao} 爻（${changingYaoName}）</div>
+      ${yaoText
+        ? `<div class="yao-text">${yaoText}</div>`
+        : `<div class="yao-text" style="color:var(--brown-lt)">第 ${changingYao} 爻发生变化，阴阳转化，引领至之卦。变爻所在之位（${yaoNames[changingYao-1]}爻）提示此刻最需关注的转折点。</div>`
+      }
+    </div>
+
+    <!-- 之卦 -->
+    <div class="gua-card zhigua">
+      <div class="card-tag">之 卦 · 发展走向</div>
+      <div class="gua-main">
+        <div>
+          <div class="gua-lines">${linesHtml(zhiLines, -1)}</div>
+        </div>
+        <div style="font-size:44px;color:var(--red);opacity:.7">${zhiSymbol}</div>
+        <div class="gua-title-wrap">
+          <div class="gua-num">第 ${zhiguaNum} 卦</div>
+          <div class="gua-name">${zhigua[2]}卦</div>
+          <div class="gua-trigrams">${TRIG[zhiUpper].name}${TRIG[zhiUpper].elem}上 · ${TRIG[zhiLower].name}${TRIG[zhiLower].elem}下</div>
+        </div>
+      </div>
+      <div class="gua-theme" style="margin-bottom:12px;font-style:italic;color:var(--brown-lt)">「${zhigua[3]}」</div>
+      <div class="gua-body">${zhigua[4]}</div>
+    </div>
+
+    <!-- 提示 -->
+    <div class="notice-box">
+      <div class="notice-text" style="text-align:center">
+        卜卦是为了学习《易经》，而非只求准验。<br>
+        以「敬、诚、一」之心读此卦，<br>
+        探求内心的平衡与成长之道。
+      </div>
+    </div>
+
+    <!-- 操作 -->
+    <div class="btn-group">
+      <button class="btn sm" onclick="resetAll()">再卜一卦</button>
+      <button class="btn sm" onclick="showScreen('s-input')">修改输入</button>
+    </div>
+  `;
+
+  document.getElementById('result-inner').innerHTML = html;
+  document.getElementById('s-result').scrollTop = 0;
+}
+
+function resetAll() {
+  document.getElementById('char-input').value = '';
+  document.getElementById('stroke-val').textContent = '—';
+  currentStrokes = 0;
+  showScreen('s-intro');
+}
+
+// ── Init ──
+goToInput(); // preload shichen
+showScreen('s-intro');
+</script>
+</body>
+</html>
