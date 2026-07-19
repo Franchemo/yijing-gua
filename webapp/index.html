@@ -10,130 +10,288 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg:       #f2e8d5;
-      --bg2:      #e8d9bf;
-      --paper:    #faf6ee;
-      --brown:    #6b4c2a;
-      --brown-lt: #9b7a52;
-      --gold:     #c9882a;
-      --red:      #9c3a2a;
-      --ink:      #2d1f0f;
-      --ink-lt:   #6b5040;
-      --border:   #c4a87a;
-      --shadow:   rgba(80,50,20,0.12);
+      --bg:        #ede4d0;
+      --bg2:       #e0d4bb;
+      --paper:     #faf5ea;
+      --paper2:    #f5edda;
+      --brown:     #5c3d1e;
+      --brown-lt:  #8c6840;
+      --gold:      #b8782a;
+      --gold-lt:   #d4a45a;
+      --red:       #8b2e1a;
+      --ink:       #251508;
+      --ink-lt:    #5c4030;
+      --border:    #c0a070;
+      --border-lt: #d8c09a;
+      --shadow:    rgba(60,35,10,0.15);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-    html, body { height: 100%; background: var(--bg); font-family: 'Noto Serif SC', serif; color: var(--ink); overflow: hidden; }
+
+    /* 纸质纹理背景 */
+    html, body {
+      height: 100%;
+      font-family: 'Noto Serif SC', serif;
+      color: var(--ink);
+      overflow: hidden;
+    }
+    body {
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(ellipse at 20% 20%, rgba(255,240,200,.35) 0%, transparent 55%),
+        radial-gradient(ellipse at 80% 80%, rgba(180,140,80,.18) 0%, transparent 50%),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    }
 
     /* ── Screens ── */
-    .screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; transition: opacity .5s, transform .5s; }
-    .screen.hidden { opacity: 0; pointer-events: none; transform: translateY(20px); }
+    .screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 28px; transition: opacity .6s cubic-bezier(.4,0,.2,1), transform .6s cubic-bezier(.4,0,.2,1); }
+    .screen.hidden { opacity: 0; pointer-events: none; transform: translateY(16px); }
 
-    /* ── Decorative border ── */
-    .frame { position: fixed; inset: 12px; border: 1.5px solid var(--border); pointer-events: none; z-index: 100; }
-    .frame::before, .frame::after { content: ''; position: absolute; width: 20px; height: 20px; border-color: var(--gold); border-style: solid; }
-    .frame::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
-    .frame::after  { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+    /* ── 装饰边框 —— 双层 ── */
+    .frame-outer { position: fixed; inset: 10px; border: 1px solid var(--border-lt); pointer-events: none; z-index: 100; }
+    .frame-inner { position: fixed; inset: 15px; border: 1px solid var(--border); pointer-events: none; z-index: 100; }
+    /* 角花 */
+    .frame-outer::before, .frame-outer::after,
+    .frame-inner::before, .frame-inner::after {
+      content: ''; position: absolute; width: 14px; height: 14px;
+      border-color: var(--gold); border-style: solid;
+    }
+    .frame-outer::before { top:-1px; left:-1px; border-width: 2px 0 0 2px; }
+    .frame-outer::after  { bottom:-1px; right:-1px; border-width: 0 2px 2px 0; }
+    .frame-inner::before { top:-1px; right:-1px; border-width: 2px 2px 0 0; }
+    .frame-inner::after  { bottom:-1px; left:-1px; border-width: 0 0 2px 2px; }
 
-    /* ── Corner ornaments ── */
-    .corner { position: fixed; font-size: 18px; color: var(--gold); opacity: .7; z-index: 101; pointer-events: none; }
-    .corner.tl { top: 20px; left: 20px; }
-    .corner.tr { top: 20px; right: 20px; }
-    .corner.bl { bottom: 20px; left: 20px; }
-    .corner.br { bottom: 20px; right: 20px; }
+    /* ── 角落卦符 ── */
+    .corner { position: fixed; font-size: 15px; color: var(--gold); opacity: .55; z-index: 101; pointer-events: none; line-height: 1; }
+    .corner.tl { top: 22px; left: 22px; }
+    .corner.tr { top: 22px; right: 22px; }
+    .corner.bl { bottom: 22px; left: 22px; }
+    .corner.br { bottom: 22px; right: 22px; }
 
     /* ── Typography ── */
-    h1 { font-size: 38px; font-weight: 300; letter-spacing: .2em; color: var(--brown); line-height: 1.3; }
-    h2 { font-size: 22px; font-weight: 400; letter-spacing: .15em; color: var(--brown); }
-    .sub { font-size: 13px; letter-spacing: .1em; color: var(--ink-lt); line-height: 2; }
-    .dot-divider { letter-spacing: .3em; color: var(--gold); margin: 12px 0; font-size: 12px; }
+    h2 { font-size: 20px; font-weight: 400; letter-spacing: .2em; color: var(--brown); }
+    .sub { font-size: 12px; letter-spacing: .12em; color: var(--ink-lt); line-height: 2; }
+    .dot-divider { letter-spacing: .4em; color: var(--gold); margin: 14px 0; font-size: 11px; opacity: .8; }
 
     /* ── Buttons ── */
-    .btn { display: inline-flex; align-items: center; justify-content: center; padding: 12px 36px; border: 1.5px solid var(--brown); background: transparent; color: var(--brown); font-family: 'Noto Serif SC', serif; font-size: 15px; letter-spacing: .2em; cursor: pointer; transition: all .3s; border-radius: 2px; min-width: 140px; }
-    .btn:hover, .btn:active { background: var(--brown); color: var(--paper); }
-    .btn.primary { background: var(--brown); color: var(--paper); }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 13px 40px; border: 1px solid var(--brown);
+      background: transparent; color: var(--brown);
+      font-family: 'Noto Serif SC', serif; font-size: 14px;
+      letter-spacing: .25em; cursor: pointer;
+      transition: all .35s cubic-bezier(.4,0,.2,1);
+      border-radius: 1px; min-width: 148px;
+      position: relative; overflow: hidden;
+    }
+    .btn::after {
+      content: ''; position: absolute; inset: 0;
+      background: var(--brown); transform: scaleX(0); transform-origin: left;
+      transition: transform .35s cubic-bezier(.4,0,.2,1); z-index: -1;
+    }
+    .btn:hover::after, .btn:active::after { transform: scaleX(1); }
+    .btn:hover, .btn:active { color: var(--paper); }
+    .btn.primary { background: var(--brown); color: var(--paper); border-color: var(--brown); }
     .btn.primary:hover { background: var(--ink); border-color: var(--ink); }
-    .btn.sm { padding: 8px 20px; font-size: 13px; min-width: 80px; }
+    .btn.primary::after { display: none; }
+    .btn.sm { padding: 9px 22px; font-size: 12px; min-width: 90px; letter-spacing: .2em; }
+    .btn:disabled { opacity: .35; cursor: not-allowed; }
+    .btn:disabled::after { display: none; }
     .btn-group { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 20px; }
 
     /* ── Screen 1: Intro ── */
     #s-intro { text-align: center; gap: 0; }
-    .title-main { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-bottom: 28px; }
-    .title-zh { font-size: 52px; font-weight: 300; letter-spacing: .35em; color: var(--brown); text-indent: .35em; }
-    .title-sub { font-size: 13px; letter-spacing: .4em; color: var(--brown-lt); text-indent: .4em; }
-    .hexagram-preview { font-size: 48px; color: var(--gold); line-height: 1; margin: 12px 0 20px; opacity: .8; }
-    .intro-desc { font-size: 13px; color: var(--ink-lt); letter-spacing: .08em; line-height: 2.2; max-width: 280px; text-align: center; }
-    .intro-note { font-size: 11px; color: var(--brown-lt); letter-spacing: .06em; margin-top: 16px; opacity: .8; }
+    .title-main { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 24px; }
+    .title-line { width: 40px; height: 1px; background: var(--gold); margin: 0 auto 4px; opacity: .6; }
+    .title-zh { font-size: 54px; font-weight: 300; letter-spacing: .45em; color: var(--brown); text-indent: .45em; }
+    .title-sub { font-size: 11px; letter-spacing: .55em; color: var(--brown-lt); text-indent: .55em; margin-top: 2px; }
+    .hexagram-preview {
+      font-size: 52px; color: var(--gold); line-height: 1;
+      margin: 10px 0 22px; opacity: .75;
+      animation: hexFloat 6s ease-in-out infinite;
+    }
+    @keyframes hexFloat {
+      0%,100% { transform: translateY(0); opacity:.75; }
+      50%      { transform: translateY(-6px); opacity:.95; }
+    }
+    .intro-desc { font-size: 13px; color: var(--ink-lt); letter-spacing: .1em; line-height: 2.4; max-width: 260px; text-align: center; }
+    .intro-note { font-size: 10px; color: var(--brown-lt); letter-spacing: .08em; margin-top: 18px; opacity: .7; }
 
     /* ── Screen 2: Meditation ── */
-    #s-meditate { text-align: center; gap: 20px; }
-    .meditate-circle { width: 160px; height: 160px; border-radius: 50%; border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; position: relative; margin: 0 auto; }
-    .meditate-circle::before { content: ''; position: absolute; inset: 8px; border-radius: 50%; border: 1px dashed var(--gold); opacity: .6; animation: rotateSlow 20s linear infinite; }
-    .timer-num { font-size: 52px; font-weight: 300; color: var(--brown); letter-spacing: -.02em; }
-    .timer-label { font-size: 12px; letter-spacing: .2em; color: var(--brown-lt); }
-    .meditate-hint { font-size: 13px; color: var(--ink-lt); letter-spacing: .1em; line-height: 2; max-width: 260px; text-align: center; }
-    .phase-label { font-size: 11px; letter-spacing: .2em; color: var(--gold); min-height: 20px; }
+    #s-meditate { text-align: center; gap: 24px; }
+    .meditate-wrap { position: relative; width: 180px; height: 180px; margin: 0 auto; }
+    .meditate-ring {
+      position: absolute; inset: 0; border-radius: 50%;
+      border: 1px solid var(--border-lt);
+      animation: ringPulse 4s ease-in-out infinite;
+    }
+    .meditate-ring.r2 {
+      inset: 12px; border-style: dashed; border-color: var(--gold);
+      opacity: .5; animation: rotateSlow 25s linear infinite;
+    }
+    .meditate-ring.r3 { inset: 26px; border-color: var(--border); opacity: .4; }
+    .meditate-inner {
+      position: absolute; inset: 30px; border-radius: 50%;
+      background: radial-gradient(circle, var(--paper2) 0%, var(--bg2) 100%);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      box-shadow: inset 0 2px 8px var(--shadow);
+    }
+    .timer-num { font-size: 48px; font-weight: 300; color: var(--brown); letter-spacing: -.02em; line-height: 1; }
+    .timer-label { font-size: 10px; letter-spacing: .25em; color: var(--brown-lt); margin-top: 2px; }
+    .meditate-hint { font-size: 12px; color: var(--ink-lt); letter-spacing: .12em; line-height: 2.2; max-width: 240px; text-align: center; }
+    .phase-label { font-size: 10px; letter-spacing: .3em; color: var(--gold); min-height: 18px; }
     @keyframes rotateSlow { to { transform: rotate(360deg); } }
-    @keyframes pulse { 0%,100% { transform: scale(1); opacity:.8; } 50% { transform: scale(1.05); opacity:1; } }
-    .meditate-circle { animation: pulse 4s ease-in-out infinite; }
+    @keyframes ringPulse { 0%,100% { transform: scale(1); opacity:.7; } 50% { transform: scale(1.03); opacity:1; } }
 
     /* ── Screen 3: Input ── */
-    #s-input { text-align: center; gap: 16px; }
-    .time-display { font-size: 12px; letter-spacing: .15em; color: var(--brown-lt); background: var(--bg2); padding: 6px 16px; border-radius: 20px; border: 1px solid var(--border); }
-    .char-input-wrap { position: relative; margin: 8px 0; }
-    .char-input { width: 100px; height: 100px; font-size: 54px; text-align: center; background: var(--paper); border: 1.5px solid var(--border); color: var(--ink); font-family: 'Noto Serif SC', serif; border-radius: 4px; outline: none; transition: border-color .3s; caret-color: var(--gold); }
-    .char-input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,136,42,.1); }
-    .stroke-row { display: flex; align-items: center; gap: 10px; justify-content: center; }
-    .stroke-label { font-size: 12px; color: var(--ink-lt); letter-spacing: .08em; }
-    .stroke-val { font-size: 20px; font-weight: 500; color: var(--brown); min-width: 32px; text-align: center; }
-    .stroke-adj { width: 32px; height: 32px; border: 1px solid var(--border); background: transparent; color: var(--brown); font-size: 18px; cursor: pointer; border-radius: 2px; display: flex; align-items: center; justify-content: center; transition: all .2s; }
-    .stroke-adj:hover { background: var(--brown); color: var(--paper); }
-    .stroke-note { font-size: 11px; color: var(--brown-lt); letter-spacing: .05em; line-height: 1.8; max-width: 260px; }
-    .shichen-display { font-size: 13px; color: var(--ink-lt); letter-spacing: .1em; }
-    .shichen-name { font-size: 18px; color: var(--brown); font-weight: 500; }
-    .input-tip { font-size: 12px; color: var(--ink-lt); letter-spacing: .05em; }
+    #s-input { text-align: center; gap: 18px; }
+    .char-input-wrap { position: relative; margin: 4px 0; }
+
+    /* 书法格 */
+    .char-input {
+      width: 116px; height: 116px; font-size: 64px; text-align: center;
+      background: var(--paper); color: var(--ink);
+      font-family: 'Noto Serif SC', serif;
+      border: none; outline: none;
+      caret-color: var(--gold);
+      position: relative; z-index: 1;
+      /* 九宫格线 */
+      background-image:
+        linear-gradient(var(--border-lt) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border-lt) 1px, transparent 1px),
+        linear-gradient(var(--border-lt) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border-lt) 1px, transparent 1px);
+      background-size: 116px 116px, 116px 116px, 38.6px 38.6px, 38.6px 38.6px;
+      background-position: -1px -1px, -1px -1px, -1px -1px, -1px -1px;
+      transition: box-shadow .3s;
+    }
+    .char-box {
+      display: inline-block; position: relative;
+      box-shadow: 0 2px 16px var(--shadow), 0 0 0 1px var(--border);
+      transition: box-shadow .3s;
+    }
+    .char-box:focus-within {
+      box-shadow: 0 4px 24px rgba(60,35,10,.22), 0 0 0 1.5px var(--gold);
+    }
+    /* 角花格 */
+    .char-box::before, .char-box::after {
+      content: ''; position: absolute; width: 10px; height: 10px;
+      border-color: var(--gold); border-style: solid; z-index: 2;
+    }
+    .char-box::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+    .char-box::after  { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+
+    /* 笔画行 */
+    .stroke-row { display: flex; align-items: center; gap: 14px; justify-content: center; }
+    .stroke-info { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 52px; }
+    .stroke-label { font-size: 10px; color: var(--brown-lt); letter-spacing: .15em; }
+    .stroke-val { font-size: 26px; font-weight: 400; color: var(--brown); line-height: 1; transition: all .2s; }
+    .stroke-adj {
+      width: 36px; height: 36px; border: 1px solid var(--border);
+      background: transparent; color: var(--brown-lt); font-size: 20px;
+      cursor: pointer; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .25s; line-height: 1;
+    }
+    .stroke-adj:hover { background: var(--brown); color: var(--paper); border-color: var(--brown); }
+
+    /* 时辰显示 */
+    .shichen-block { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    .shichen-label { font-size: 10px; letter-spacing: .2em; color: var(--brown-lt); }
+    .shichen-name  { font-size: 22px; font-weight: 400; color: var(--brown); letter-spacing: .1em; }
+    .shichen-range { font-size: 11px; color: var(--ink-lt); letter-spacing: .06em; }
+    .divider-ornament { color: var(--gold-lt); opacity: .6; font-size: 11px; letter-spacing: .3em; }
 
     /* ── Screen 4: Result ── */
-    #s-result { gap: 0; padding: 20px; justify-content: flex-start; padding-top: 36px; overflow-y: auto; }
-    .result-inner { width: 100%; max-width: 360px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; padding-bottom: 24px; }
-    .gua-card { background: var(--paper); border: 1.5px solid var(--border); border-radius: 4px; padding: 18px 20px; position: relative; overflow: hidden; }
-    .gua-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
-    .gua-card.zhigua::before { background: linear-gradient(90deg, transparent, var(--red), transparent); }
-    .card-tag { font-size: 10px; letter-spacing: .2em; color: var(--brown-lt); margin-bottom: 10px; }
-    .gua-main { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; }
-    .gua-symbol { font-size: 40px; line-height: 1; }
-    .gua-title-wrap { flex: 1; }
-    .gua-num { font-size: 11px; color: var(--brown-lt); letter-spacing: .1em; }
-    .gua-name { font-size: 24px; font-weight: 500; color: var(--brown); letter-spacing: .1em; }
-    .gua-theme { font-size: 12px; color: var(--ink-lt); letter-spacing: .05em; margin-top: 2px; line-height: 1.6; }
-    .gua-trigrams { font-size: 11px; color: var(--brown-lt); letter-spacing: .08em; }
-    .gua-body { font-size: 13px; color: var(--ink-lt); line-height: 2; letter-spacing: .05em; border-top: 1px solid var(--bg2); padding-top: 12px; }
-    .yao-box { background: var(--bg); border: 1px solid var(--border); border-radius: 3px; padding: 10px 14px; }
-    .yao-title { font-size: 11px; color: var(--gold); letter-spacing: .15em; margin-bottom: 6px; }
-    .yao-text { font-size: 12px; color: var(--ink-lt); line-height: 1.9; letter-spacing: .05em; }
-    .result-note { font-size: 11px; color: var(--brown-lt); text-align: center; letter-spacing: .08em; line-height: 2; padding: 0 8px; }
-    .gua-lines { display: flex; flex-direction: column; gap: 3px; align-items: center; }
-    .yao-line { display: flex; gap: 4px; align-items: center; }
-    .yao-seg { width: 22px; height: 5px; border-radius: 2px; background: var(--brown); }
-    .yao-seg.broken { width: 9px; }
-    .yao-line.changing .yao-seg { background: var(--red); }
+    #s-result { gap: 0; padding: 20px 20px 0; justify-content: flex-start; padding-top: 32px; overflow-y: auto; }
+    .result-inner { width: 100%; max-width: 380px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; padding-bottom: 28px; }
 
-    /* ── Dividers & misc ── */
-    .section-title { font-size: 11px; letter-spacing: .25em; color: var(--brown-lt); text-align: center; margin: 4px 0; }
-    .thin-line { height: 1px; background: var(--border); opacity: .4; margin: 4px 0; }
-    .notice-box { background: rgba(201,136,42,.06); border: 1px solid rgba(201,136,42,.3); border-radius: 4px; padding: 10px 14px; }
-    .notice-text { font-size: 11px; color: var(--ink-lt); line-height: 2; letter-spacing: .05em; }
+    /* 卦牌 */
+    .gua-card {
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 20px 22px 18px;
+      position: relative; overflow: hidden;
+      box-shadow: 0 2px 12px var(--shadow), inset 0 1px 0 rgba(255,240,200,.5);
+    }
+    .gua-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent 5%, var(--gold) 40%, var(--gold-lt) 60%, transparent 95%);
+    }
+    .gua-card.zhigua::before {
+      background: linear-gradient(90deg, transparent 5%, var(--red) 40%, #c0503a 60%, transparent 95%);
+    }
+    .card-tag {
+      font-size: 9px; letter-spacing: .3em; color: var(--brown-lt);
+      margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+    }
+    .card-tag::after { content: ''; flex: 1; height: 1px; background: var(--border-lt); opacity: .6; }
+
+    .gua-main { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 14px; }
+    .gua-lines-wrap { display: flex; flex-direction: column; align-items: center; gap: 12px; padding-top: 2px; }
+    .gua-lines { display: flex; flex-direction: column; gap: 4px; align-items: center; }
+    .yao-line { display: flex; gap: 5px; align-items: center; }
+    .yao-seg { width: 24px; height: 5px; border-radius: 1.5px; background: var(--brown); }
+    .yao-seg.broken { width: 10px; }
+    .yao-line.changing .yao-seg { background: var(--red); box-shadow: 0 0 4px rgba(139,46,26,.4); }
+
+    .gua-symbol-big { font-size: 48px; color: var(--gold); opacity: .7; line-height: 1; }
+    .gua-symbol-big.zhi { color: var(--red); opacity: .6; }
+    .gua-title-wrap { flex: 1; }
+    .gua-num { font-size: 10px; color: var(--brown-lt); letter-spacing: .15em; margin-bottom: 4px; }
+    .gua-name { font-size: 26px; font-weight: 500; color: var(--brown); letter-spacing: .08em; line-height: 1.1; }
+    .gua-trigrams { font-size: 11px; color: var(--brown-lt); letter-spacing: .06em; margin-top: 6px; }
+    .gua-theme-quote {
+      font-size: 12px; color: var(--brown); letter-spacing: .06em;
+      font-style: italic; line-height: 1.6;
+      border-left: 2px solid var(--gold-lt); padding-left: 10px;
+      margin-bottom: 12px; opacity: .85;
+    }
+    .gua-body { font-size: 13px; color: var(--ink-lt); line-height: 2.1; letter-spacing: .05em; border-top: 1px solid var(--border-lt); padding-top: 12px; }
+
+    /* 变爻框 */
+    .yao-box {
+      background: linear-gradient(135deg, var(--bg) 0%, var(--paper2) 100%);
+      border: 1px solid var(--border-lt);
+      border-radius: 2px; padding: 12px 16px;
+      position: relative;
+    }
+    .yao-box::before {
+      content: ''; position: absolute; left: 0; top: 10%; bottom: 10%;
+      width: 2px; background: linear-gradient(transparent, var(--gold), transparent);
+    }
+    .yao-title { font-size: 10px; color: var(--gold); letter-spacing: .2em; margin-bottom: 8px; }
+    .yao-text { font-size: 12px; color: var(--ink-lt); line-height: 2; letter-spacing: .06em; }
+
+    /* 结果元信息 */
+    .result-meta {
+      text-align: center; font-size: 10px; color: var(--brown-lt);
+      letter-spacing: .2em; line-height: 2; padding: 4px 0;
+      opacity: .8;
+    }
+
+    /* 底部提示 */
+    .closing-verse {
+      text-align: center; font-size: 11px; color: var(--brown-lt);
+      letter-spacing: .1em; line-height: 2.2; padding: 8px 12px;
+      border-top: 1px solid var(--border-lt); margin-top: 4px; opacity: .75;
+    }
+
+    /* ── 杂 ── */
+    .section-title { font-size: 10px; letter-spacing: .25em; color: var(--brown-lt); text-align: center; }
+    .thin-line { height: 1px; background: var(--border-lt); opacity: .5; margin: 6px 0; }
 
     /* ── Scrollbar ── */
-    #s-result::-webkit-scrollbar { width: 4px; }
+    #s-result::-webkit-scrollbar { width: 3px; }
     #s-result::-webkit-scrollbar-track { background: transparent; }
-    #s-result::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    #s-result::-webkit-scrollbar-thumb { background: var(--border-lt); border-radius: 2px; }
   </style>
 </head>
 <body>
 
-<!-- Decorative frame -->
-<div class="frame"></div>
+<!-- 双层装饰边框 -->
+<div class="frame-outer"></div>
+<div class="frame-inner"></div>
 <div class="corner tl">☰</div>
 <div class="corner tr">☷</div>
 <div class="corner bl">☵</div>
@@ -142,23 +300,28 @@
 <!-- ══ Screen 1: Intro ══ -->
 <div class="screen" id="s-intro">
   <div class="title-main">
+    <div class="title-line"></div>
     <div class="title-zh">易卦</div>
     <div class="title-sub">意 识 占</div>
+    <div class="title-line"></div>
   </div>
   <div class="hexagram-preview" id="intro-hex">䷀</div>
   <div class="intro-desc">
-    静心凝神，<br>让一个汉字在心中浮现，<br>与天地运行的规律相通，<br>照见此刻的处境。
+    静心凝神<br>让一个汉字在心中浮现<br>与天地运行的规律相通<br>照见此刻的处境
   </div>
-  <div class="dot-divider">· · ·</div>
-  <button class="btn primary" onclick="startMeditate()">开始卜卦</button>
-  <div class="intro-note">方法源自《易经白话讲座》· 王思迅</div>
+  <div class="dot-divider">· · · · ·</div>
+  <button class="btn primary" onclick="startMeditate()">开 始 卜 卦</button>
+  <div class="intro-note">方法源自《易经白话讲座》· 王思迅著</div>
 </div>
 
 <!-- ══ Screen 2: Meditation ══ -->
 <div class="screen hidden" id="s-meditate">
   <div class="phase-label" id="phase-label">放 松 心 情</div>
-  <div class="meditate-circle">
-    <div>
+  <div class="meditate-wrap">
+    <div class="meditate-ring"></div>
+    <div class="meditate-ring r2"></div>
+    <div class="meditate-ring r3"></div>
+    <div class="meditate-inner">
       <div class="timer-num" id="timer-num">30</div>
       <div class="timer-label">秒</div>
     </div>
@@ -166,44 +329,43 @@
   <div class="meditate-hint" id="meditate-hint">
     请放松，轻闭双眼<br>在心中默想您想问的事情<br>诚心祈求，静待感应
   </div>
-  <button class="btn sm" onclick="skipToInput()" style="margin-top:8px">跳过</button>
+  <button class="btn sm" onclick="skipToInput()" style="margin-top:4px">跳 过</button>
 </div>
 
 <!-- ══ Screen 3: Input ══ -->
 <div class="screen hidden" id="s-input">
-  <h2 style="margin-bottom:4px">心中浮现的字</h2>
+  <h2>心中浮现的字</h2>
   <div class="sub">闭目片刻后，输入脑海中浮现的汉字</div>
 
+  <!-- 书法格输入框 -->
   <div class="char-input-wrap">
-    <input class="char-input" id="char-input" type="text" maxlength="1"
-      placeholder="字" inputmode="text" autocomplete="off"
-      oninput="onCharInput(this.value)">
+    <div class="char-box">
+      <input class="char-input" id="char-input" type="text" maxlength="1"
+        placeholder="字" inputmode="text" autocomplete="off"
+        oninput="onCharInput(this.value)">
+    </div>
   </div>
 
+  <!-- 笔画调整 -->
   <div class="stroke-row">
     <button class="stroke-adj" onclick="adjustStrokes(-1)">−</button>
-    <div>
+    <div class="stroke-info">
       <div class="stroke-label">康熙笔画</div>
       <div class="stroke-val" id="stroke-val">—</div>
     </div>
     <button class="stroke-adj" onclick="adjustStrokes(1)">＋</button>
   </div>
 
-  <div class="stroke-note notice-box">
-    <div class="notice-text">
-      笔画须按康熙字典计算：<br>
-      扌→手(4) &nbsp;|&nbsp; 艹→艸(6) &nbsp;|&nbsp; 辶→走(7)<br>
-      如自动识别有误，请手动调整
-    </div>
-  </div>
+  <div class="divider-ornament">· · ·</div>
 
-  <div style="text-align:center">
-    <div class="sub">当前时辰</div>
+  <!-- 时辰 -->
+  <div class="shichen-block">
+    <div class="shichen-label">当 前 时 辰</div>
     <div class="shichen-name" id="shichen-name">—</div>
-    <div class="shichen-display" id="shichen-display">—</div>
+    <div class="shichen-range" id="shichen-display">—</div>
   </div>
 
-  <button class="btn primary" id="calc-btn" onclick="calculate()" disabled>起 卦</button>
+  <button class="btn primary" id="calc-btn" onclick="calculate()" disabled>起 &ensp; 卦</button>
 </div>
 
 <!-- ══ Screen 4: Result ══ -->
@@ -604,69 +766,65 @@ function renderResult(ch, strokes, sc, upperIdx, lowerIdx, benguaNum, changingYa
   }
 
   const html = `
-    <!-- 卜卦记录 -->
-    <div style="text-align:center; margin-bottom:4px">
-      <div class="section-title">· ${new Date().toLocaleTimeString('zh',{hour:'2-digit',minute:'2-digit'})} · ${sc.name}时 · 字「${ch}」· ${strokes}画 ·</div>
+    <!-- 元信息 -->
+    <div class="result-meta">
+      字「${ch}」· ${strokes} 画 &emsp;${sc.name}时 · ${new Date().toLocaleTimeString('zh',{hour:'2-digit',minute:'2-digit'})}
     </div>
 
     <!-- 本卦 -->
     <div class="gua-card">
-      <div class="card-tag">本 卦 · 当下处境</div>
+      <div class="card-tag">本 卦 &ensp; 当下处境</div>
       <div class="gua-main">
-        <div>
+        <div class="gua-lines-wrap">
           <div class="gua-lines">${linesHtml(lines, changingYao)}</div>
         </div>
-        <div style="font-size:44px;color:var(--gold);opacity:.8">${benSymbol}</div>
+        <div class="gua-symbol-big">${benSymbol}</div>
         <div class="gua-title-wrap">
           <div class="gua-num">第 ${benguaNum} 卦</div>
           <div class="gua-name">${bengua[2]}卦</div>
           <div class="gua-trigrams">${TRIG[upperIdx].name}${TRIG[upperIdx].elem}上 · ${TRIG[lowerIdx].name}${TRIG[lowerIdx].elem}下</div>
         </div>
       </div>
-      <div class="gua-theme" style="margin-bottom:12px;font-style:italic;color:var(--brown-lt)">「${bengua[3]}」</div>
+      <div class="gua-theme-quote">「${bengua[3]}」</div>
       <div class="gua-body">${bengua[4]}</div>
     </div>
 
     <!-- 变爻 -->
     <div class="yao-box">
-      <div class="yao-title">▸ 变爻 · 第 ${changingYao} 爻（${changingYaoName}）</div>
+      <div class="yao-title">变 爻 · 第 ${changingYao} 爻 · ${changingYaoName}</div>
       ${yaoText
         ? `<div class="yao-text">${yaoText}</div>`
-        : `<div class="yao-text" style="color:var(--brown-lt)">第 ${changingYao} 爻发生变化，阴阳转化，引领至之卦。变爻所在之位（${yaoNames[changingYao-1]}爻）提示此刻最需关注的转折点。</div>`
+        : `<div class="yao-text">此爻阴阳转化，是本卦走向之卦的关键。${yaoNames[changingYao-1]}爻之位，提示此刻最需关注的转折所在。</div>`
       }
     </div>
 
     <!-- 之卦 -->
     <div class="gua-card zhigua">
-      <div class="card-tag">之 卦 · 发展走向</div>
+      <div class="card-tag">之 卦 &ensp; 发展走向</div>
       <div class="gua-main">
-        <div>
+        <div class="gua-lines-wrap">
           <div class="gua-lines">${linesHtml(zhiLines, -1)}</div>
         </div>
-        <div style="font-size:44px;color:var(--red);opacity:.7">${zhiSymbol}</div>
+        <div class="gua-symbol-big zhi">${zhiSymbol}</div>
         <div class="gua-title-wrap">
           <div class="gua-num">第 ${zhiguaNum} 卦</div>
           <div class="gua-name">${zhigua[2]}卦</div>
           <div class="gua-trigrams">${TRIG[zhiUpper].name}${TRIG[zhiUpper].elem}上 · ${TRIG[zhiLower].name}${TRIG[zhiLower].elem}下</div>
         </div>
       </div>
-      <div class="gua-theme" style="margin-bottom:12px;font-style:italic;color:var(--brown-lt)">「${zhigua[3]}」</div>
+      <div class="gua-theme-quote">「${zhigua[3]}」</div>
       <div class="gua-body">${zhigua[4]}</div>
     </div>
 
-    <!-- 提示 -->
-    <div class="notice-box">
-      <div class="notice-text" style="text-align:center">
-        卜卦是为了学习《易经》，而非只求准验。<br>
-        以「敬、诚、一」之心读此卦，<br>
-        探求内心的平衡与成长之道。
-      </div>
+    <!-- 结语 -->
+    <div class="closing-verse">
+      以「敬 · 诚 · 一」之心读此卦<br>探求内心的平衡与成长之道
     </div>
 
     <!-- 操作 -->
     <div class="btn-group">
-      <button class="btn sm" onclick="resetAll()">再卜一卦</button>
-      <button class="btn sm" onclick="showScreen('s-input')">修改输入</button>
+      <button class="btn sm" onclick="resetAll()">再 卜 一 卦</button>
+      <button class="btn sm" onclick="showScreen('s-input')">修 改 输 入</button>
     </div>
   `;
 
